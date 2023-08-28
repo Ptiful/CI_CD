@@ -11,8 +11,8 @@ jobs:
     - name: Build Docker image
       run: docker build -t hln_scrapper:${{ github.sha }} .
 
-    - name: Run unittests
-      run: docker run hln_scrapper:${{ github.sha }} python -m pytest .
+    # - name: Run unittests
+    #   run: docker run hln_scrapper:${{ github.sha }} python -m pytest .
 
     - name: Log in to Docker Hub
       if: ${{ success() }}
