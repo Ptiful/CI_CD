@@ -1,4 +1,3 @@
-yaml
 name: CI/CD Pipeline
 
 on: push
@@ -11,10 +10,10 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Build Docker image
-      run: docker build -t hln_scraper:${{ github.sha }} .
+      run: docker build -t hln_scrapper:${{ github.sha }} .
 
-    # - name: Run unittests
-    #   run: docker run hln_scraper:${{ github.sha }} python -m pytest .
+    - name: Run unittests
+      run: docker run hln_scrapper:${{ github.sha }} python -m pytest .
 
     - name: Push Docker image
       if: ${{ success() }}
@@ -22,6 +21,6 @@ jobs:
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_PASSWORD }}
-      run: |
-        docker tag hln_scraper:${{ github.sha }} ecrets.DOCKERHUB_USERNAME/hln_scraper:${{ github.sha }}
-        docker push ecrets.DOCKERHUB_USERNAME/hln_scraper:${{ github.sha }}er run hln_scraper pytest
+        run: |
+          docker tag hln_scrapper:${{ github.sha }} DOCKERHUB_USERNAME/hln_scrapper:${{ github.sha }}
+          docker push DOCKERHUB_USERNAME/hln_scrapper:${{ github.sha }} run hln_scrapper pytest
