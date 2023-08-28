@@ -13,72 +13,82 @@ load_dotenv()
 
 XML_URL = "https://www.hln.be/sitemap-news.xml"
 
-JSON_FILEPATH = os.path.join('.', "hln_scrapper","my_json.json")
+JSON_FILEPATH = os.path.join(".", "hln_scrapper", "my_json.json")
+
 
 def fetch_cookie(url, session):
-    """ Will fetch cookie from hln so we can see content"""
+    """Will fetch cookie from hln so we can see content"""
 
     cookie = session.get(url).cookies
     return cookie
 
+
 def get_links(url, session):
     """will get all links from sitemap"""
-    pages = requests.get(url, cookies= fetch_cookie(url, session)).content
+    pages = requests.get(url, cookies=fetch_cookie(url, session)).content
     soup = bs(pages, "html.parser")
-    
+
     for link in soup.find_all("loc"):
         yield link.text
 
+
 def get_article(link, session):
     container = {}
-    
+
     response = session.get(link)
-    if response.status_code!= 200:
-        print(response.status_code) 
+    if response.status_code != 200:
+        print(response.status_code)
     soup = bs(response.content, "html.parser")
 
     container["source"] = XML_URL.split(".")[1]
-    
+
     url = link
     container["url"] = url
 
     title = soup.find_all("h1")
-    if title :
+    if title:
         article_title = title[0].text.strip()
         container["title"] = article_title
-    else :
+    else:
         print("no title")
 
     elements = soup.find_all("p")
-    if elements :
+    if elements:
         text_list = [element.get_text() for element in elements]
         container["text"] = "\n".join(text_list)
-    else :
+    else:
         print("no articles")
 
     published_time = soup.find("meta", property="article:published_time")
     if published_time:
-        published_date = published_time.get("content", None)dico = get_all_data()
+        published_date = published_time.get("content", None)
+        container["date"] = published_date
+    else:
+        print("no date")
+
     return container
+
 
 def get_articles(links, session):
     """Will fetch all titles, articles, dates, from urls, on at a time
     and will store it in a list of dictionary."""
     return list(thread_map(partial(get_article, session=session), links))
 
+
 def save_json(articles):
     """Usefull to see if there is a mistake when scrapping"""
 
-    JSON_FILEPATH = os.path.join('.', "hln_scrapper","my_json.json")
+    JSON_FILEPATH = os.path.join(".", "hln_scrapper", "my_json.json")
     with open(JSON_FILEPATH, "w") as f:
         json.dump(articles, f)
 
-def mangodb_connection(articles):
+
+def save_articles_to_db(articles):
     """Create a connection with MangoDB and upload database"""
-    mongodb_url = os.getenv("MONGODB_URI")
+    MONGODB_URI = os.getenv("MONGODB_URI")
     database_name = "bouman_datatank"
     collection_name = "articles"
-    client = pymongo.MongoClient(mongodb_url)
+    client = pymongo.MongoClient(MONGODB_URI)
     database = client[database_name]
     collection = database[collection_name]
 
@@ -98,7 +108,8 @@ def main():
         links = get_links(XML_URL, session)
         articles = get_articles(links, session)
     # save_json(articles)
-    mangodb_connection(articles)
+    save_articles_to_db(articles)
+
 
 if __name__ == "__main__":
     main()
